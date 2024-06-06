@@ -6,7 +6,6 @@ from geometry_msgs.msg import Twist
 from std_srvs.srv import SetBool
 
 # TODO: Wait until Joy listener receives stuff before publishing Twist
-# TODO: Check if joy msg has enough axes for our parameters → no array overflow
 # TODO: Subscribe to maximums and map accordingly
 
 
@@ -56,20 +55,26 @@ class Bento_Teleop(Node):
             self.get_logger().warn('Joystick message time travel detected. Check your publishers.')
 
         # get joystick axes, modify linear and angular with throttle
-        #self.get_logger().debug('Axis test: "%f"' % msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value] )
-        throttle = self.scale(msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value], -1.0, 1.0, 0.0, 1.0)
-        self.velocities.linear.x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
-        self.velocities.angular.z = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
+        try:
+            #self.get_logger().debug('Axis test: "%f"' % msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value] )
+            throttle = self.scale(msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value], -1.0, 1.0, 0.0, 1.0)
+            self.velocities.linear.x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
+            self.velocities.angular.z = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
+        except IndexError:
+            self.get_logger().error('Joystick message/config error: parameters call for more axes than in message.')
 
         # get joystick buttons, and send enable/disable requests accordingly
-        if (msg.buttons[self.get_parameter('button_enable').get_parameter_value().integer_value] == 1
-                and not self.last_joy.buttons[self.get_parameter('button_enable').get_parameter_value().integer_value] == 1):
-            self.get_logger().info('Enabling robot.')
-            self.send_enable_request(True)
-        if (msg.buttons[self.get_parameter('button_disable').get_parameter_value().integer_value] == 1
-                and not self.last_joy.buttons[self.get_parameter('button_disable').get_parameter_value().integer_value] == 1):
-            self.get_logger().info('Disabling robot.')
-            self.send_enable_request(False)
+        try:
+            if (msg.buttons[self.get_parameter('button_enable').get_parameter_value().integer_value] == 1
+                    and not self.last_joy.buttons[self.get_parameter('button_enable').get_parameter_value().integer_value] == 1):
+                self.get_logger().info('Enabling robot.')
+                self.send_enable_request(True)
+            if (msg.buttons[self.get_parameter('button_disable').get_parameter_value().integer_value] == 1
+                    and not self.last_joy.buttons[self.get_parameter('button_disable').get_parameter_value().integer_value] == 1):
+                self.get_logger().info('Disabling robot.')
+                self.send_enable_request(False)
+        except IndexError:
+            self.get_logger().error('Joystick message/config error: parameters call for more buttons than in message.')
 
         # save the most recent joystick message, so we can compare with it to figure out what moved
         self.last_joy = msg
