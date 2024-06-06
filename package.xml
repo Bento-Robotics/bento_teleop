@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>bento_teleop</name>
-  <version>0.0.1</version>
+  <version>0.0.2</version>
   <description>Teleoperation for bento robots</description>
   <maintainer email="bento.robotics@gmail.com">Samuel Pelz</maintainer>
   <license>MIT</license>
