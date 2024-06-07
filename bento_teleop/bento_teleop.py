@@ -1,12 +1,13 @@
 import rclpy
 from rclpy.node import Node
+from rclpy.parameter import Parameter
 
 from sensor_msgs.msg import Joy
 from geometry_msgs.msg import Twist
 from std_srvs.srv import SetBool
+from std_msgs.msg import Float32MultiArray
 
 # TODO: Wait until Joy listener receives stuff before publishing Twist
-# TODO: Subscribe to maximums and map accordingly
 
 
 class Bento_Teleop(Node):
@@ -24,10 +25,17 @@ class Bento_Teleop(Node):
         self.declare_parameter('button_disable', 3)
         self.declare_parameter('publish_rate', 0.1)  # seconds
         self.declare_parameter('enable_service_name', '/bento/enable')
+        self.declare_parameter('maximum_rpm_topic', '/bento/maximum/rpms')
+        self.declare_parameter('maximum_vel_topic', '/bento/maximum/velocity')
+        self.declare_parameter('maximum_rpm_default', [0.0, 0.0, 0.0, 0.0])
+        self.declare_parameter('maximum_vel_default.linear', [10.0, 0.0, 0.0])
+        self.declare_parameter('maximum_vel_default.angular', [10.0, 0.0, 0.0])
 
         # initialize subscribers, subscribers, timers and service clients
-        self.subscription_ = self.create_subscription(Joy, '/teleop/joy', self.listener_callback, 10)
-        self.publisher_ = self.create_publisher(Twist, '/teleop/cmd_vel', 10)
+        self.joy_subscription_ = self.create_subscription(Joy, '/teleop/joy', self.joy_callback, 10)
+        self.maxRPM_subscription_ = self.create_subscription(Float32MultiArray, self.get_parameter('maximum_rpm_topic').get_parameter_value().string_value, self.maximum_rpm_callback, 10)
+        self.maxVel_subscription_ = self.create_subscription(Twist, self.get_parameter('maximum_vel_topic').get_parameter_value().string_value, self.maximum_velocity_callback, 10)
+        self.twist_publisher_ = self.create_publisher(Twist, '/teleop/cmd_vel', 10)
         self.timer = self.create_timer(self.get_parameter('publish_rate').get_parameter_value().double_value, self.timer_callback)
         self.enable_client = self.create_client(SetBool, self.get_parameter('enable_service_name').get_parameter_value().string_value)
 
@@ -50,7 +58,7 @@ class Bento_Teleop(Node):
 
 
     """joystick message listener, processes joystick data"""
-    def listener_callback(self, msg):
+    def joy_callback(self, msg):
         if msg.header.stamp.sec < self.last_joy.header.stamp.sec:
             self.get_logger().warn('Joystick message time travel detected. Check your publishers.')
 
@@ -58,8 +66,10 @@ class Bento_Teleop(Node):
         try:
             #self.get_logger().debug('Axis test: "%f"' % msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value] )
             throttle = self.scale(msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value], -1.0, 1.0, 0.0, 1.0)
-            self.velocities.linear.x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
-            self.velocities.angular.z = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -10.0, 10.0)
+            max_linear = self.get_parameter('maximum_vel_default.linear').get_parameter_value().double_array_value[0]
+            self.velocities.linear.x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_linear, max_linear)
+            max_angular = self.get_parameter('maximum_vel_default.angular').get_parameter_value().double_array_value[0]
+            self.velocities.angular.z = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_angular, max_angular)
         except IndexError:
             self.get_logger().error('Joystick message/config error: parameters call for more axes than in message.')
 
@@ -79,11 +89,28 @@ class Bento_Teleop(Node):
         # save the most recent joystick message, so we can compare with it to figure out what moved
         self.last_joy = msg
 
+    def maximum_velocity_callback(self, msg):
+        self.set_parameters([
+                Parameter('maximum_vel_default.linear', rclpy.Parameter.Type.DOUBLE_ARRAY, [ msg.linear.x, msg.linear.y, msg.linear.z ]),
+                Parameter('maximum_vel_default.angular', rclpy.Parameter.Type.DOUBLE_ARRAY, [ msg.angular.x, msg.angular.y, msg.angular.z ])
+        ])
+
+    def maximum_rpm_callback(self, msg):
+        if len(msg.layout.dim) != 2:
+            self.get_logger().warn('Maximum RPM error: data malformed. Expected 2 dimensions')
+
+        data = []
+        for i in range(len(msg.data) // (msg.layout.dim[1].stride // msg.layout.dim[1].size)):
+            data.append(msg.data[msg.layout.data_offset + i * msg.layout.dim[1].stride])
+        self.set_parameters([
+                Parameter('maximum_rpm_default', rclpy.Parameter.Type.DOUBLE_ARRAY, data)
+        ])
+
 
     """timer callback, publishes Twist (cmd_vel) messages created from joystick data"""
     def timer_callback(self):
         msg = self.velocities
-        self.publisher_.publish(msg)
+        self.twist_publisher_.publish(msg)
 
     """scale inputs min/max values, used for mapping joystick data"""
     def scale(self, num, inMin, inMax, outMin, outMax):
