@@ -1,0 +1,21 @@
+/**:
+  ros__parameters:
+
+    # Joystick mappings
+    axis_linear: 1
+    axis_angular: 2
+    axis_throttle: 3
+
+    button_enable: 2
+    button_disable: 3
+
+    # Publisher/service params
+    publish_rate: 0.1
+    enable_service_name: '/bento/enable'
+    maximum_rpm_topic: '/bento/maximum/rpms'
+    maximum_vel_topic: '/bento/maximum/velocity'
+
+    # Maximum defaults (in case the robot doesn't publish it's values)
+    maximum_rpm_default: [0.0, 0.0]
+    maximum_vel_default.linear: [10.0, 0.0, 0.0]
+    maximum_vel_default.angular: [10.0, 0.0, 0.0]
