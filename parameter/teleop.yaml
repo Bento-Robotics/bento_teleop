@@ -11,9 +11,10 @@
 
     # Publisher/service params
     publish_rate: 0.1
-    enable_service_name: '/bento/enable'
-    maximum_rpm_topic: '/bento/maximum/rpms'
-    maximum_vel_topic: '/bento/maximum/velocity'
+    robot_namespace: '/bento'
+    enable_service_name: '/enable'
+    maximum_rpm_topic: '/maximum/rpms'
+    maximum_vel_topic: '/maximum/velocity'
 
     # Maximum defaults (in case the robot doesn't publish it's values)
     maximum_rpm_default: [0.0, 0.0]
