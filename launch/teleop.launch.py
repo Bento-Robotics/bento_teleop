@@ -14,11 +14,22 @@ def generate_launch_description():
         executable='teleop_node',
         name='teleop_node',
         parameters=[ PathJoinSubstitution([ FindPackageShare('bento_teleop'), 'parameter', 'teleop.yaml' ]) ],
-        namespace=EnvironmentVariable( 'EDU_ROBOT_NAMESPACE', default_value="bento" ),
+        namespace=EnvironmentVariable( 'OPERATOR_NAMESPACE', default_value="box_opr" ),
         output='screen',
         emulate_tty=True,
     )
 
+    joystick = Node(
+        package='joy_linux',
+        executable='joy_linux_node',
+        parameters=[
+            {'autorepeat_rate': 20.0},
+            {'coalesce_interval_ms': 50}
+        ],
+        namespace=EnvironmentVariable( 'OPERATOR_NAMESPACE', default_value="box_opr" ),
+    )
+
     return LaunchDescription([
-        bento_teleop
+        bento_teleop,
+        joystick,
     ])

@@ -24,20 +24,21 @@ class Bento_Teleop(Node):
         self.declare_parameter('button_enable',  2)
         self.declare_parameter('button_disable', 3)
         self.declare_parameter('publish_rate', 0.1)  # seconds
-        self.declare_parameter('enable_service_name', '/bento/enable')
-        self.declare_parameter('maximum_rpm_topic', '/bento/maximum/rpms')
-        self.declare_parameter('maximum_vel_topic', '/bento/maximum/velocity')
+        self.declare_parameter('robot_namespace', '/bento')
+        self.declare_parameter('enable_service_name', '/enable')
+        self.declare_parameter('maximum_rpm_topic', '/maximum/rpms')
+        self.declare_parameter('maximum_vel_topic', '/maximum/velocity')
         self.declare_parameter('maximum_rpm_default', [0.0, 0.0, 0.0, 0.0])
         self.declare_parameter('maximum_vel_default.linear', [10.0, 0.0, 0.0])
         self.declare_parameter('maximum_vel_default.angular', [10.0, 0.0, 0.0])
 
         # initialize subscribers, subscribers, timers and service clients
-        self.joy_subscription_ = self.create_subscription(Joy, '/teleop/joy', self.joy_callback, 10)
-        self.maxRPM_subscription_ = self.create_subscription(Float32MultiArray, self.get_parameter('maximum_rpm_topic').get_parameter_value().string_value, self.maximum_rpm_callback, 10)
-        self.maxVel_subscription_ = self.create_subscription(Twist, self.get_parameter('maximum_vel_topic').get_parameter_value().string_value, self.maximum_velocity_callback, 10)
-        self.twist_publisher_ = self.create_publisher(Twist, '/teleop/cmd_vel', 10)
-        self.timer = self.create_timer(self.get_parameter('publish_rate').get_parameter_value().double_value, self.timer_callback)
-        self.enable_client = self.create_client(SetBool, self.get_parameter('enable_service_name').get_parameter_value().string_value)
+        self.joy_subscription_    = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
+        self.maxRPM_subscription_ = self.create_subscription(Float32MultiArray, ( self.get_parameter('robot_namespace').get_parameter_value().string_value + self.get_parameter('maximum_rpm_topic').get_parameter_value().string_value ), self.maximum_rpm_callback, 10)
+        self.maxVel_subscription_ = self.create_subscription(Twist, ( self.get_parameter('robot_namespace').get_parameter_value().string_value + self.get_parameter('maximum_vel_topic').get_parameter_value().string_value ), self.maximum_velocity_callback, 10)
+        self.twist_publisher_     = self.create_publisher(Twist, ( self.get_parameter('robot_namespace').get_parameter_value().string_value + '/cmd_vel' ), 10)
+        self.timer                = self.create_timer(self.get_parameter('publish_rate').get_parameter_value().double_value, self.timer_callback)
+        self.enable_client        = self.create_client(SetBool, ( self.get_parameter('robot_namespace').get_parameter_value().string_value + self.get_parameter('enable_service_name').get_parameter_value().string_value ))
 
         # make sure the service exists already, and send a disable for good measure
         while not self.enable_client.wait_for_service(timeout_sec=1.0):
