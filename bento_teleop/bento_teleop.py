@@ -68,9 +68,13 @@ class Bento_Teleop(Node):
             #self.get_logger().debug('Axis test: "%f"' % msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value] )
             throttle = self.scale(msg.axes[self.get_parameter('axis_throttle').get_parameter_value().integer_value], -1.0, 1.0, 0.0, 1.0)
             max_linear = self.get_parameter('maximum_vel_default.linear').get_parameter_value().double_array_value[0]
-            self.velocities.linear.x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_linear, max_linear)
+            lin_x = self.scale(msg.axes[self.get_parameter('axis_linear').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_linear, max_linear)
+            if lin_x == 0.0: lin_x = 0.00000000000000000000000000001
+            self.velocities.linear.x = lin_x
             max_angular = self.get_parameter('maximum_vel_default.angular').get_parameter_value().double_array_value[0]
-            self.velocities.angular.z = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_angular, max_angular)
+            ang_y = self.scale(msg.axes[self.get_parameter('axis_angular').get_parameter_value().integer_value] * throttle, -1.0, 1.0, -max_angular, max_angular)
+            if ang_y == 0.0: ang_y = 0.00000000000000000000000000001
+            self.velocities.angular.z = ang_y
         except IndexError:
             self.get_logger().error('Joystick message/config error: parameters call for more axes than in message.')
 
