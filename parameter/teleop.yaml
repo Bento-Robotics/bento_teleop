@@ -9,6 +9,11 @@
     button_enable: 2
     button_disable: 3
 
+    button_flippers_front_up: 9
+    button_flippers_front_down: 8
+    button_flippers_back_up: 11
+    button_flippers_back_down: 10
+
     # Publisher/service params
     publish_rate: 0.1
     robot_namespace: '/bento'
