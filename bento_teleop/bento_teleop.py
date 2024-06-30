@@ -97,6 +97,11 @@ class Bento_Teleop(Node):
             button_id = self.get_param_val(button_name).integer_value
             return ( msg.buttons[button_id] == 1  and not  self.last_joy.buttons[button_id] == 1 )
 
+        """generic button event parser, takes button name, true while pressed, false elsewise"""
+        def button_is_pressed(button_name):
+            button_id = self.get_param_val(button_name).integer_value
+            return ( msg.buttons[button_id] == 1 )
+
         """generic button event parser, takes button name, true on release, false elsewise"""
         def button_got_released(button_name):
             button_id = self.get_param_val(button_name).integer_value
@@ -116,12 +121,13 @@ class Bento_Teleop(Node):
             except IndexError:
                 self.get_logger().error('Joystick message/config error: parameters call for more buttons than in message.')
 
+        if (self.last_joy.buttons != msg.buttons) or (msg.axes[ (thr := self.get_param_val('axis.throttle').integer_value) ] != self.last_joy.axes[thr]):
             try:
                 for i in range(self.get_param_val('rpm_override_count').integer_value):
                     override_namespace = 'rpm_override_' + str(i)
                     speed_multiplier = self.get_param_val(override_namespace + '.speed_multiplier').double_value
                     overrides_motors = self.get_param_val(override_namespace + '.overrides_motors').integer_array_value
-                    if (direction := button_got_pressed(override_namespace + '.button_backward')) or button_got_pressed(override_namespace + '.button_forward'):
+                    if (direction := button_is_pressed(override_namespace + '.button_backward')) or button_is_pressed(override_namespace + '.button_forward'):
                         for i in overrides_motors:
                             self.rpm_overrides.data[abs(i)] = throttle * speed_multiplier * (-1 if direction else 1) * (-1 if i<0 else 1) * self.get_param_val('maximum.rpm').double_array_value[i]
                     if button_got_released(override_namespace + '.button_backward') or button_got_released(override_namespace + '.button_forward'):
