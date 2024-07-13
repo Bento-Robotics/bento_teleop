@@ -108,7 +108,6 @@ class Bento_Teleop(Node):
             return ( msg.buttons[button_id] == 0  and  ( self.last_joy.buttons[button_id] == 1 if len(self.last_joy.buttons) >= button_id else False) ) # gets triggered before first write to last_joy
 
 
-
         # get joystick buttons, and send enable/disable requests accordingly
         if self.last_joy.buttons != msg.buttons:
             try:
