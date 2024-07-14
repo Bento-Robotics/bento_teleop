@@ -27,7 +27,7 @@ class Bento_Teleop(Node):
         self.declare_parameter('button.enable',  2)
         self.declare_parameter('button.disable', 3)
         self.declare_parameter('publish_rate', 0.02)  # seconds
-        self.declare_parameter('robot_namespace', '/bento')
+        self.declare_parameter('robot_namespace', Parameter.Type.STRING)
         self.declare_parameter('enable_service_name', '/enable')
         self.declare_parameter('maximum_rpm_topic', '/maximum/rpms')
         self.declare_parameter('maximum_vel_topic', '/maximum/velocity')
@@ -43,6 +43,14 @@ class Bento_Teleop(Node):
             self.declare_parameter(override_namespace + '.speed_multiplier', Parameter.Type.DOUBLE)
             self.declare_parameter(override_namespace + '.overrides_motors', Parameter.Type.INTEGER_ARRAY)
 
+        # wait until 'robot_namespace' is set
+        while rclpy.ok():
+            try: self.get_parameter('robot_namespace')
+            except rclpy.exceptions.ParameterUninitializedException:
+                self.get_logger().warn('\'robot_namespace\' parameter unset, waiting for value...', once=True)
+                rclpy.spin_once(self)
+            else: break
+
         # initialize subscribers, subscribers, timers and service clients
         self.joy_subscription_    = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
         self.maxRPM_subscription_ = self.create_subscription(Float32MultiArray, ( self.get_param_val('robot_namespace').string_value + self.get_param_val('maximum_rpm_topic').string_value ), self.maximum_rpm_callback, 10)
@@ -54,7 +62,7 @@ class Bento_Teleop(Node):
 
         # make sure the service exists already, and send a disable for good measure
         while not self.enable_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('enable service not available yet, waiting...')
+            self.get_logger().info('enable service not available yet, waiting...', once=True)
         self.send_enable_request(False)
 
 
