@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
 		'teleop_node = bento_teleop.bento_teleop:main',
+                'arm_teleop_node = bento_teleop.bento_arm_teleop:main',
         ],
     },
 )

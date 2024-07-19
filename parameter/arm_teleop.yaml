@@ -1,0 +1,34 @@
+/**:
+  ros__parameters:
+
+    # Joystick mappings
+    axis.linear: 1
+    axis.angular: 0
+    axis.throttle: 3
+
+    button.enable: 2
+    button.disable: 3
+
+    rpm_override_count: 2
+
+    rpm_override_0.button_forward: 9
+    rpm_override_0.button_backward: 8
+    rpm_override_0.speed_multiplier: 0.5
+    rpm_override_0.overrides_motors: [ 0, -1] # negative = inverted
+
+    rpm_override_1.button_forward: 11
+    rpm_override_1.button_backward: 10
+    rpm_override_1.speed_multiplier: 0.5
+    rpm_override_1.overrides_motors: [ -6, 7]
+
+    # Publisher/service params
+    publish_rate: 0.2
+    robot_namespace: ''
+    enable_service_name: '/enable'
+    maximum_rpm_topic: '/maximum/rpms'
+    maximum_vel_topic: '/maximum/velocity'
+
+    # Maximum defaults (in case the robot doesn't publish it's values)
+    maximum.rpm: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    maximum.vel.linear: [10.0, 0.0, 0.0]
+    maximum.vel.angular: [0.0, 0.0, 10.0]
