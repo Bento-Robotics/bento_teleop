@@ -50,6 +50,7 @@ class Bento_Teleop(Node):
         self.twist_publisher_     = self.create_publisher(Twist, ( self.get_param_val('robot_namespace').string_value + '/cmd_vel' ), 10)
         self.rpm_override_publisher_ = self.create_publisher(Float32MultiArray, ( self.get_param_val('robot_namespace').string_value + '/rpmOverride' ), 10)
         self.timer                = self.create_timer(self.get_param_val('publish_rate').double_value, self.timer_callback)
+        self.enable_spam_timer    = self.create_timer(2, self.enable_spam_timer_callback)
         self.enable_client        = self.create_client(SetBool, ( self.get_param_val('robot_namespace').string_value + self.get_param_val('enable_service_name').string_value ))
 
         # make sure the service exists already, and send a disable for good measure
@@ -61,6 +62,7 @@ class Bento_Teleop(Node):
     """sends a boolean request to the service server,
        response arrives later, via the 'future'"""
     def send_enable_request(self, data):
+        self.is_enabled = data
         if not self.enable_client.service_is_ready():
             self.get_logger().warn('enable service became unavailable, aborting request.')
             return
@@ -156,6 +158,9 @@ class Bento_Teleop(Node):
         self.rpm_overrides = msg
         self.rpm_overrides.data[0:len(tmp)] = tmp
 
+    """spam enable requests when enabled"""
+    def enable_spam_timer_callback(self):
+        if self.is_enabled: self.send_enable_request(self.is_enabled)
 
     """timer callback, publishes Twist (cmd_vel) messages created from joystick data"""
     def timer_callback(self):
