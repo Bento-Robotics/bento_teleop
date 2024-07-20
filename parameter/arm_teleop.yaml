@@ -22,7 +22,7 @@
     rpm_override_1.overrides_motors: [ -6, 7]
 
     # Publisher/service params
-    publish_rate: 0.2
+    publish_rate: 0.1
     robot_namespace: ''
     enable_service_name: '/enable'
     maximum_rpm_topic: '/maximum/rpms'
