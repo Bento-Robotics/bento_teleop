@@ -24,12 +24,13 @@ class Bento_Teleop(Node):
         self.arm_point.y = 0.0
 
         # initialize parameters
-        self.declare_parameter('button.return_home', 3)
-        self.declare_parameter('robot_namespace', '/bento')
-        self.declare_parameter('axis.linear', 1)
-        self.declare_parameter('axis.angular', 2)
+        self.declare_parameter('button.return_home', 5)
+        self.declare_parameter('button.use_arm_mode', 0)
+        self.declare_parameter('axis.x', 1)
+        self.declare_parameter('axis.y', 0)
         self.declare_parameter('axis.throttle', 3)
-        self.declare_parameter('publish_rate', 0.02)
+        self.declare_parameter('robot_namespace', '/bento')
+        self.declare_parameter('publish_rate', 0.1)
 
         # initialize subscribers, subscribers, timers and service clients
         self.joy_subscription_    = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
@@ -42,28 +43,26 @@ class Bento_Teleop(Node):
         if self.last_joy.header.stamp.sec > msg.header.stamp.sec:
             self.get_logger().warn('Joystick message time travel detected. Check your publishers.')
 
-        self.throttle = self.scale(msg.axes[self.get_param_val('axis.throttle').integer_value], -1.0, 1.0, 0.0, 1.0)
-        self.arm_point.x += msg.axes[self.get_param_val('axis.linear').integer_value]
-        self.arm_point.y += msg.axes[self.get_param_val('axis.angular').integer_value]
- 
-
         """generic button event parser, takes button name, true on press, false elsewise"""
         def button_got_pressed(button_name):
             button_id = self.get_param_val(button_name).integer_value
             return ( msg.buttons[button_id] == 1  and not  self.last_joy.buttons[button_id] == 1 )
-
 
         """generic button event parser, takes button name, true while pressed, false elsewise"""
         def button_is_pressed(button_name):
             button_id = self.get_param_val(button_name).integer_value
             return ( msg.buttons[button_id] == 1 )
 
-
         """generic button event parser, takes button name, true on release, false elsewise"""
         def button_got_released(button_name):
             button_id = self.get_param_val(button_name).integer_value
             return ( msg.buttons[button_id] == 0  and  ( self.last_joy.buttons[button_id] == 1 if len(self.last_joy.buttons) >= button_id else False) ) # gets triggered before first write to last_joy
 
+
+        if button_is_pressed('button.use_arm_mode'):
+            self.throttle = self.scale(msg.axes[self.get_param_val('axis.throttle').integer_value], -1.0, 1.0, 0.0, 1.0)
+            self.arm_point.x += msg.axes[self.get_param_val('axis.x').integer_value]
+            self.arm_point.y += msg.axes[self.get_param_val('axis.y').integer_value]
 
         if button_got_pressed('button.return_home'):
            print("stinkt")
