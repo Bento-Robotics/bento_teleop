@@ -55,7 +55,7 @@ class Bento_Teleop(Node):
 
         # make sure the service exists already, and send a disable for good measure
         while not self.enable_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().info('enable service not available yet, waiting...')
+            self.get_logger().warn('enable service not available yet, waiting...')
         self.send_enable_request(False)
 
 
