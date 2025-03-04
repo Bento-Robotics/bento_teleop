@@ -10,5 +10,5 @@
     button.return_home: 5
 
     # Publisher/service params
-    publish_rate: 0.2
+    publish_rate: 0.02
     robot_namespace: ''

@@ -20,7 +20,7 @@ class Bento_Teleop(Node):
     def __init__(self):
         super().__init__('bento_teleop')
 
-        self.arm_point.x = 110.0
+        self.arm_point.x = 0.0
         self.arm_point.y = 0.0
 
         # initialize parameters
@@ -34,7 +34,7 @@ class Bento_Teleop(Node):
 
         # initialize subscribers, subscribers, timers and service clients
         self.joy_subscription_    = self.create_subscription(Joy, 'joy', self.joy_callback, 10)
-        self.point_publisher_     = self.create_publisher(Point, (self.get_param_val('robot_namespace').string_value + '/arm_position' ), 10)
+        self.point_publisher_     = self.create_publisher(Point, (self.get_param_val('robot_namespace').string_value + '/arm_control_relative' ), 10)
         self.timer                = self.create_timer(self.get_param_val('publish_rate').double_value, self.timer_callback)
         self.home_client          = self.create_client(Trigger, "/home_arm")
 
@@ -65,10 +65,8 @@ class Bento_Teleop(Node):
             self.arm_point.y += msg.axes[self.get_param_val('axis.y').integer_value]
 
         if button_got_pressed('button.return_home'):
-           print("stinkt")
-           self.arm_point.x = 110.0
-           self.arm_point.y = 0.0
-           # self.home_client.call_async(Trigger.Request())
+           print("home")
+           self.home_client.call_async(Trigger.Request())
 
         # save the most recent joystick message, so we can compare with it to figure out what moved
         self.last_joy = msg
@@ -76,13 +74,16 @@ class Bento_Teleop(Node):
     """timer callback, publishes Twist (cmd_vel) messages created from joystick data"""
     def timer_callback(self):
         maxValue = math.sqrt(150 ** 2 + 260 ** 2)
-        self.arm_point.x += self.joy_point.x * 2 * self.throttle
-        self.arm_point.y += self.joy_point.y * 2 * self.throttle
+        self.arm_point.x += self.joy_point.x * 0.5 * self.throttle
+        self.arm_point.y += self.joy_point.y * 0.5 * self.throttle
 
-        self.arm_point.x = min(110 + maxValue, max(-maxValue, self.arm_point.x))
-        self.arm_point.y = min(maxValue, max(-maxValue, self.arm_point.y))
+        #self.arm_point.x = min(110 + maxValue, max(-maxValue, self.arm_point.x))
+        #self.arm_point.y = min(maxValue, max(-maxValue, self.arm_point.y))
 
         self.point_publisher_.publish(self.arm_point)
+
+        self.arm_point.x = 0.0
+        self.arm_point.y = 0.0
 
 
     """scale inputs min/max values, used for mapping joystick data"""
