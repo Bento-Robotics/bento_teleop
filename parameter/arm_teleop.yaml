@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+
+    # Joystick mappings
+    axis.x: 1
+    axis.y: 0
+    axis.throttle: 3
+
+    button.use_arm_mode: 0
+    button.return_home: 5
+
+    # Publisher/service params
+    publish_rate: 0.02
+    robot_namespace: ''
