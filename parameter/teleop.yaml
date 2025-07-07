@@ -23,7 +23,6 @@
 
     # Publisher/service params
     publish_rate: 0.05
-    robot_namespace: '/bento'
     enable_service_name: '/enable'
     maximum_rpm_topic: '/maximum/rpms'
     maximum_vel_topic: '/maximum/velocity'
