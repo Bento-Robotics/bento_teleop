@@ -1,33 +1,38 @@
 /**:
   ros__parameters:
 
-    # Joystick mappings
-    axis.linear: 1
-    axis.angular: 2
-    axis.throttle: 3
+  # Main node params
+    publish_rate: 20.0 # milliseconds
 
-    button.enable: 2
-    button.disable: 3
+  # Arm
+    arm/axis.throttle: 3
+    arm/axis.x: 1
+    arm/axis.y: 0
+    arm/button.home: 5
+    arm/button.use_arm_mode: 0
+    # movement speed multiplier, directly multiplied on
+    arm/speed_multiplier: 20
 
-    rpm_override_count: 2
+  # Drive
+    drive/axis.throttle: 3
+    drive/axis.linear: 1
+    drive/axis.angular: 2
+    drive/button.disable: 3
+    drive/button.enable: 2
+    # maximum defaults (in case the robot doesn't publish it's values)
+    drive/maximum.rpm: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
+    drive/maximum.vel.linear: [10.0, 0.0, 0.0]
+    drive/maximum.vel.angular: [0.0, 0.0, 10.0]
+  
+    # rpm overrides
+    drive/rpm_override_count: 2
 
-    rpm_override_0.button_forward: 9
-    rpm_override_0.button_backward: 8
-    rpm_override_0.speed_multiplier: 0.5
-    rpm_override_0.overrides_motors: [ 0, -1] # negative = inverted
+    drive/rpm_override_0.button_forward: 9
+    drive/rpm_override_0.button_backward: 8
+    drive/rpm_override_0.speed_multiplier: 0.5
+    drive/rpm_override_0.overrides_motors: [ 0, -1] # negative = inverted
 
-    rpm_override_1.button_forward: 11
-    rpm_override_1.button_backward: 10
-    rpm_override_1.speed_multiplier: 0.5
-    rpm_override_1.overrides_motors: [ -6, 7]
-
-    # Publisher/service params
-    publish_rate: 0.05
-    enable_service_name: '/enable'
-    maximum_rpm_topic: '/maximum/rpms'
-    maximum_vel_topic: '/maximum/velocity'
-
-    # Maximum defaults (in case the robot doesn't publish it's values)
-    maximum.rpm: [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0]
-    maximum.vel.linear: [10.0, 0.0, 0.0]
-    maximum.vel.angular: [0.0, 0.0, 10.0]
+    drive/rpm_override_1.button_forward: 11
+    drive/rpm_override_1.button_backward: 10
+    drive/rpm_override_1.speed_multiplier: 0.5
+    drive/rpm_override_1.overrides_motors: [ -6, 7]

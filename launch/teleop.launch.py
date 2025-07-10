@@ -7,9 +7,6 @@ from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
-from launch.actions import GroupAction
-from launch_ros.actions import PushRosNamespace
-
 from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
@@ -21,11 +18,11 @@ def generate_launch_description():
         executable='teleop_node',
         name='teleop_node',
         parameters=[
-            {'robot_namespace': ["/", robot_namespace]},
             PathJoinSubstitution([ FindPackageShare('bento_teleop'), 'parameter', 'teleop.yaml' ]),
         ],
         output='screen',
         emulate_tty=True,
+        namespace=robot_namespace,
     )
 
     joystick = Node(
@@ -35,6 +32,9 @@ def generate_launch_description():
             {'autorepeat_rate': 20.0},
             {'coalesce_interval_ms': 50}
         ],
+        output='screen',
+        emulate_tty=True,
+        namespace=[robot_namespace, "_opr"],
     )
 
     return LaunchDescription([
@@ -43,10 +43,6 @@ def generate_launch_description():
             default_value='bento',
             description='set namespace for robot nodes'
         ),
-        GroupAction(
-        actions=[
-            PushRosNamespace( [robot_namespace, "_opr"] ),
-            bento_teleop,
-            joystick,
-        ])
+        bento_teleop,
+        joystick,
     ])
