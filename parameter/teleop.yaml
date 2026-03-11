@@ -8,10 +8,13 @@
     arm/axis.throttle: 3
     arm/axis.x: 1
     arm/axis.y: 0
+    arm/axis.wrist: 2
+    arm/axis.gripper: 5
     arm/button.home: 5
     arm/button.use_arm_mode: 0
     # movement speed multiplier, directly multiplied on
-    arm/speed_multiplier: 20
+    arm/speed_multiplier: 10.0
+    arm/gripper_speed_multiplier: 10.0
 
   # Drive
     drive/axis.throttle: 3

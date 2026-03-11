@@ -19,6 +19,7 @@ class Drive_Teleop():
 
     def __init__(self, teleop_node):
         self.node = teleop_node
+        self.logged_rpm_override_error = False
 
         # initialize parameters
         self.node.declare_parameter('drive/axis.linear',   1)
@@ -54,9 +55,9 @@ class Drive_Teleop():
         self.enable_spam_timer = self.node.create_timer(2, self.enable_spam_timer_callback)
 
         # make sure the service exists already, and send a disable for good measure
-        while not self.enable_client.wait_for_service(timeout_sec=2.0):
-            self.node.get_logger().warn('enable service not available yet, waiting...')
-        self.send_enable_request(False)
+        # while not self.enable_client.wait_for_service(timeout_sec=2.0):
+        #     self.node.get_logger().warn('enable service not available yet, waiting...')
+        # self.send_enable_request(False)
 
         self.node.add_publisher_to_main_timer(self.pub_timer_callback)
 
@@ -116,7 +117,9 @@ class Drive_Teleop():
                 else:
                     for i in overrides_motors: self.rpm_overrides.data[abs(i)] = 0
         except IndexError:
-            self.node.get_logger().error('RPM override config error: config incompatiable with actual data')
+            if (not self.logged_rpm_override_error) :
+                self.node.get_logger().error('RPM override config error: config incompatiable with actual data')
+                self.logged_rpm_override_error = True
 
         self.twist_publisher_.publish(self.velocities)
         self.rpm_override_publisher_.publish(self.rpm_overrides)
