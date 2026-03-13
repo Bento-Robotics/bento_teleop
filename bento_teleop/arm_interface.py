@@ -25,13 +25,13 @@ class Arm_Teleop:
         self.node.declare_parameter('arm/axis.gripper', 5)
         self.node.declare_parameter('arm/axis.throttle', 3)
         self.node.declare_parameter('arm/speed_multiplier', 10.0)
-        self.node.declare_parameter('arm/gripper_speed_multiplier', 10.0)
 
+        self.wrist_axis
 
         # initialize subscribers, subscribers, timers and service clients
         self.point_publisher = self.node.create_publisher(Point, '/arm_control_relative', 10)
-        self.wrist_publisher = self.node.create_publisher(Float32, '/wrist_control_relative', 10)
-        self.gripper_publisher = self.node.create_publisher(Float32, '/endeffector_control_relative', 10)
+        self.wrist_publisher = self.node.create_publisher(Float64, '/wrist_control_relative', 10)
+        self.gripper_publisher = self.node.create_publisher(Float64, '/endeffector_control_relative', 10)
         self.home_client     = self.node.create_client(Trigger, "/home_arm", callback_group=ReentrantCallbackGroup())
 
         self.node.add_publisher_to_main_timer(self.pub_timer_callback)
@@ -43,13 +43,18 @@ class Arm_Teleop:
 
 
         if self.node.get_button_held('arm/button.use_arm_mode'):
+             # map -1..1 to 0..1
+            def scale_js_axis(value):
+                return (value + 0.1) / 2
 
-            self.arm_point.x += self.node.get_axis_value('arm/axis.x') * self.node.get_param_val('arm/speed_multiplier').integer_value * (self.node.get_axis_value('arm/axis.throttle') + 1.0) * 0.5
-            self.arm_point.y += self.node.get_axis_value('arm/axis.y') * self.node.get_param_val('arm/speed_multiplier').integer_value * (self.node.get_axis_value('arm/axis.throttle') + 1.0) * 0.5
-            wrist_unscaled = self.node.get_axis_value('arm/axis.wrist') * self.node.get_param_val('arm/speed_multiplier').integer_value * (self.node.get_axis_value('arm/axis.throttle') + 1.0) * 0.5
-            gripper_unscaled = self.node.get_axis_value('arm/axis.gripper') * self.node.get_param_val('arm/gripper_speed_multiplier').integer_value * (self.node.get_axis_value('arm/axis.throttle') + 1.0) * 0.5
-            self.wrist_axis.data += (wrist_unscaled + 1.0 ) * 0.5
-            self.gripper_axis.data += (gripper_unscaled + 1.0 ) * 0.5
+            throttle_scaler = scale_js_axis(self.node.get_axis_value('arm/axis.throttle'))
+            arm_speed_scaler = self.node.get_param_val('arm/speed_multiplier').integer_value * throttle_scaler
+
+            self.arm_point.x = self.node.get_axis_value('arm/axis.x') * arm_speed_scaler
+            self.arm_point.y = self.node.get_axis_value('arm/axis.y') * arm_speed_scaler
+            self.wrist_axis.data = self.node.get_axis_value('arm/axis.wrist') * arm_speed_scaler
+            self.gripper_axis.data = self.node.get_axis_value('arm/axis.gripper') * arm_speed_scaler
+
         self.point_publisher.publish(self.arm_point)
         self.wrist_publisher.publish(self.wrist_axis)
         self.gripper_publisher.publish(self.gripper_axis)
@@ -58,15 +63,9 @@ class Arm_Teleop:
         self.gripper_axis.data = 0.0
         self.wrist_axis.data = 0.0
         if self.node.get_button_pressed('arm/button.home'):
-                # # remove command conflict that was causing jitter
-                # self.arm_point.x = 0.0
-                # self.arm_point.y = 0.0
-                # self.point_publisher.publish(self.arm_point)
-                # self.node.call_service(self.send_home_request)
             self.send_home_request()
 
     def send_home_request(self):
-        """because of multithreading you gotta call it real funkily, so just use bento_teleop_node.call_service(func)"""
         if not self.home_client.service_is_ready():
             self.node.get_logger().warn('arm home service unavailable, aborting request.')
             return
