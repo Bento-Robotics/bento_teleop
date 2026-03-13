@@ -5,7 +5,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 
 from geometry_msgs.msg import Point
 from std_srvs.srv import Trigger
-from std_msgs.msg import Float32
+from std_msgs.msg import Float64
 
 
 class Arm_Teleop:
@@ -13,9 +13,10 @@ class Arm_Teleop:
 
     def __init__(self, teleop_node):
         self.arm_point = Point()
+        self.wrist_axis = Float64()
+        self.gripper_axis = Float64()
         self.node = teleop_node
-        self.wrist_axis = Float32()
-        self.gripper_axis = Float32()
+
         # initialize parameters
         self.node.declare_parameter('arm/button.home', 5)
         self.node.declare_parameter('arm/button.use_arm_mode', 0)
@@ -45,10 +46,10 @@ class Arm_Teleop:
         if self.node.get_button_held('arm/button.use_arm_mode'):
              # map -1..1 to 0..1
             def scale_js_axis(value):
-                return (value + 0.1) / 2
+                return (value + 1.0) / 2
 
             throttle_scaler = scale_js_axis(self.node.get_axis_value('arm/axis.throttle'))
-            arm_speed_scaler = self.node.get_param_val('arm/speed_multiplier').integer_value * throttle_scaler
+            arm_speed_scaler = self.node.get_param_val('arm/speed_multiplier').double_value * throttle_scaler
 
             self.arm_point.x = self.node.get_axis_value('arm/axis.x') * arm_speed_scaler
             self.arm_point.y = self.node.get_axis_value('arm/axis.y') * arm_speed_scaler
