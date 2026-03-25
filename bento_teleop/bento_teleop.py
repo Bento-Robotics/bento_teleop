@@ -12,6 +12,19 @@ class Bento_Teleop_Node(Node):
     publisher_callbacks: list = []
     joy_now = Joy()
     joy_last = Joy()
+    already_errored_parameters: set = set()
+
+    def button_param_error (self, button_param):
+        if button_param not in self.already_errored_parameters:
+            self.get_logger().error('Joystick message/config error: ' + button_param + ' parameter calls for more buttons than in message.')
+            self.already_errored_parameters.add(button_param)
+
+
+    def axis_param_error (self, axis_param):
+        if axis_param not in self.already_errored_parameters:
+            self.get_logger().error('Joystick message/config error: ' + axis_param + ' parameter calls for more buttons than in message.')
+            self.already_errored_parameters.add(axis_param)
+
 
 
     def __init__(self):
@@ -25,7 +38,7 @@ class Bento_Teleop_Node(Node):
            call after initializing all interfaces"""
         for timer in self.timers:
             timer.reset()
-        def update_joy_cb(fk_u_python): # neccesary because python has crippled lambdas and annnoying 'self' requirements
+        def update_joy_cb(fk_u_python): # necessary because python has crippled lambdas and annoying 'self' requirements
             # save the most recent joystick message, so we can compare with it to figure out what moved
             fk_u_python.joy_last = fk_u_python.joy_now
         self.publisher_callbacks.append(partial(update_joy_cb, fk_u_python=self))
@@ -42,7 +55,7 @@ class Bento_Teleop_Node(Node):
 
         if self.joy_last.header.stamp.sec > msg.header.stamp.sec:
             self.get_logger().warn('Joystick message time travel detected. Check your publishers.')
-            
+
         # first call, set up array length
         if self.joy_now.axes == [] and self.joy_now.buttons == []:
             self.joy_now.axes = [0.0] * 6 # set common length,
@@ -52,14 +65,14 @@ class Bento_Teleop_Node(Node):
 
         # store joystick
         self.joy_now = msg
-            
+
     def get_button_pressed(self, button_param: str) -> bool:
         """button event parser, takes button name, true on press, false elsewise"""
         button_id = self.get_param_val(button_param).integer_value
         try:
             return ( self.joy_now.buttons[button_id] == True and self.joy_last.buttons[button_id] == False )
         except IndexError:
-            self.get_logger().error('Joystick message/config error: ' + button_param + ' parameter calls for more buttons than in message.')
+            self.button_param_error(button_param)
 
     def get_button_held(self, button_param: str) -> bool:
         """button event parser, takes button name, true while pressed, false elsewise"""
@@ -67,7 +80,7 @@ class Bento_Teleop_Node(Node):
         try:
             return ( self.joy_now.buttons[button_id] == True and self.joy_last.buttons[button_id] == True )
         except IndexError:
-            self.get_logger().error('Joystick message/config error: ' + button_param + ' parameter calls for more buttons than in message.')
+            self.button_param_error(button_param)
 
     def get_button_released(self, button_param: str) -> bool:
         """generic button event parser, takes button name, true on release, false elsewise"""
@@ -75,16 +88,16 @@ class Bento_Teleop_Node(Node):
         try:
             return ( self.joy_now.buttons[button_id] == False and self.joy_last.buttons[button_id] ==  (True if len(self.joy_last.buttons) >= button_id else False) ) # gets triggered before first write to joy_callback.joy_last
         except IndexError:
-            self.get_logger().error('Joystick message/config error: ' + button_param + ' parameter calls for more buttons than in message.')
+            self.button_param_error(button_param)
 
-    def get_axis_value(self, axis_param: str) -> int:
-        """get the value of a joystick axis from its index's parameter name"""    
+    def get_axis_value(self, axis_param: str) -> float:
+        """get the value of a joystick axis from its index's parameter name"""
         try:
             return self.joy_now.axes[self.get_param_val(axis_param).integer_value]
         except IndexError:
-            self.get_logger().error('Joystick message/config error: ' + axis_param + ' parameter calls for more axes than in message.')
+            self.axis_param_error(axis_param)
             return math.nan
-        
+
     def get_param_val(self, parameter):
         """get the parameter value of parameter xyz. Use with `.<type>_value` -functions"""
         return self.get_parameter(parameter).get_parameter_value()
