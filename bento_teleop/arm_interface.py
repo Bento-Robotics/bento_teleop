@@ -41,18 +41,18 @@ class Arm_Teleop:
         maxValue = math.sqrt(150 ** 2 + 260 ** 2)
 
 
-        if self.node.get_button_held('arm/button.use_arm_mode'):
-             # map -1..1 to 0..1
-            def scale_js_axis(value):
-                return (value + 1.0) / 2
+         # map -1..1 to 0..1
+        def scale_js_axis(value):
+            return (value + 1.0) / 2
 
-            throttle_scaler = scale_js_axis(self.node.get_axis_value('arm/axis.throttle'))
-            arm_speed_scaler = self.node.get_param_val('arm/speed_multiplier').double_value * throttle_scaler
+        throttle_scaler = scale_js_axis(self.node.get_axis_value('arm/axis.throttle'))
+        arm_speed_scaler = self.node.get_param_val('arm/speed_multiplier').double_value * throttle_scaler
+        if self.node.get_button_held('arm/button.use_arm_mode'):
 
             self.arm_point.x = self.node.get_axis_value('arm/axis.x') * arm_speed_scaler
-            self.arm_point.y = self.node.get_axis_value('arm/axis.y') * arm_speed_scaler
-            self.wrist_axis.data = self.node.get_axis_value('arm/axis.wrist') * arm_speed_scaler
-            self.gripper_axis.data = self.node.get_axis_value('arm/axis.gripper') * arm_speed_scaler
+            self.arm_point.y = - self.node.get_axis_value('arm/axis.y') * arm_speed_scaler
+            self.wrist_axis.data = - self.node.get_axis_value('arm/axis.wrist') * arm_speed_scaler * 0.4
+        self.gripper_axis.data = - self.node.get_axis_value('arm/axis.gripper') * arm_speed_scaler * 0.5
 
         self.point_publisher.publish(self.arm_point)
         self.wrist_publisher.publish(self.wrist_axis)
