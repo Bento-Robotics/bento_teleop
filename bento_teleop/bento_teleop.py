@@ -1,6 +1,8 @@
 import math
+import sys
 from functools import partial
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import Joy
 
@@ -116,7 +118,7 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     except ExternalShutdownException:
-        node.destroy_node()
+        bento_teleop.destroy_node()
         rclpy.shutdown()
         sys.exit(1)
 

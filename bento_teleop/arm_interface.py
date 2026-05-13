@@ -27,8 +27,6 @@ class Arm_Teleop:
         self.node.declare_parameter('arm/axis.throttle', 3)
         self.node.declare_parameter('arm/speed_multiplier', 10.0)
 
-        self.wrist_axis
-
         # initialize subscribers, subscribers, timers and service clients
         self.point_publisher = self.node.create_publisher(Point, '/arm_control_relative', 10)
         self.wrist_publisher = self.node.create_publisher(Float64, '/wrist_control_relative', 10)

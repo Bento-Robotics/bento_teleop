@@ -1,2 +1,7 @@
 bento_teleop/__pycache__/*
 test/__pycache__/*
+build
+install
+log
+.vscode
+.idea
