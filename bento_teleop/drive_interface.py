@@ -119,22 +119,20 @@ class Drive_Teleop():
                 else:
                     for i in overrides_motors: self.rpm_overrides.data[abs(i)] = 0
         except IndexError:
-            if (not self.logged_rpm_override_error) :
+            if (not self.logged_rpm_override_error):
                 self.node.get_logger().error('RPM override config error: config incompatiable with actual data')
                 self.logged_rpm_override_error = True
 
-        if not (self.is_twist_zero(self.velocities_last) and self.is_twist_zero(self.velocities_now)):
-            self.twist_publisher_.publish(self.velocities_now)
-            self.rpm_override_publisher_.publish(self.rpm_overrides)
+        if self.is_twist_zero(self.velocities_last) and self.is_twist_zero(self.velocities_now):
+            return
+
+        self.twist_publisher_.publish(self.velocities_now)
+        self.rpm_override_publisher_.publish(self.rpm_overrides)
 
         self.velocities_last = self.velocities_now
 
-
-    def is_twist_zero(self, twist):
-        if twist.linear.x == twist.linear.y == twist.linear.z ==  twist.angular.x == twist.angular.y == twist.angular.z == 0.0:
-            return True
-        else:
-            return False
+    def is_twist_zero(self, twist: Twist) -> bool:
+        return twist.linear.x == twist.linear.y == twist.linear.z == twist.angular.x == twist.angular.y == twist.angular.z == 0.0
 
     def maximum_velocity_callback(self, msg):
         """subscriber callback for max velocity"""
