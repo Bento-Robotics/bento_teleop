@@ -11,7 +11,9 @@ from std_msgs.msg import Float32MultiArray
 
 
 class Drive_Teleop():
-    velocities = Twist()
+    velocities_now = Twist()
+    velocities_last = Twist()
+
     rpm_overrides = Float32MultiArray()
     is_enabled: bool = False
     node: Node
@@ -93,11 +95,11 @@ class Drive_Teleop():
             except IndexError:
                 self.node.get_logger().error('Velocity maximums message malformed. Check your publishers.')
 
-            self.velocities.linear.x  = self._scale(self.node.get_axis_value('drive/axis.linear' ) * throttle, -1.0, 1.0, -max_linear,  max_linear)
-            self.velocities.angular.z = self._scale(self.node.get_axis_value('drive/axis.angular') * throttle, -1.0, 1.0, -max_angular, max_angular)
+            self.velocities_now.linear.x  = self._scale(self.node.get_axis_value('drive/axis.linear' ) * throttle, -1.0, 1.0, -max_linear,  max_linear)
+            self.velocities_now.angular.z = self._scale(self.node.get_axis_value('drive/axis.angular') * throttle, -1.0, 1.0, -max_angular, max_angular)
         else:
-            self.velocities.linear.x  = 0.0
-            self.velocities.angular.z = 0.0
+            self.velocities_now.linear.x  = 0.0
+            self.velocities_now.angular.z = 0.0
 
 
         # get joystick buttons, and send enable/disable requests accordingly
@@ -121,8 +123,18 @@ class Drive_Teleop():
                 self.node.get_logger().error('RPM override config error: config incompatiable with actual data')
                 self.logged_rpm_override_error = True
 
-        self.twist_publisher_.publish(self.velocities)
-        self.rpm_override_publisher_.publish(self.rpm_overrides)
+        if not (self.is_twist_zero(self.velocities_last) and self.is_twist_zero(self.velocities_now)):
+            self.twist_publisher_.publish(self.velocities_now)
+            self.rpm_override_publisher_.publish(self.rpm_overrides)
+
+        self.velocities_last = self.velocities_now
+
+
+    def is_twist_zero(self, twist):
+        if twist.linear.x == twist.linear.y == twist.linear.z ==  twist.angular.x == twist.angular.y == twist.angular.z == 0.0:
+            return True
+        else:
+            return False
 
     def maximum_velocity_callback(self, msg):
         """subscriber callback for max velocity"""
