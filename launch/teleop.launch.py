@@ -34,13 +34,13 @@ def generate_launch_description():
         ],
         output='screen',
         emulate_tty=True,
-        namespace=[robot_namespace, "_opr"],
+        namespace=[robot_namespace, "/opr"],
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(
             'robot_namespace',
-            default_value='bento',
+            default_value='',
             description='set namespace for robot nodes'
         ),
         bento_teleop,

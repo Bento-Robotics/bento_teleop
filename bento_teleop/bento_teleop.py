@@ -32,7 +32,7 @@ class Bento_Teleop_Node(Node):
     def __init__(self):
         super().__init__('bento_teleop_node')
         self.declare_parameter('publish_rate', 20.0) # milliseconds
-        self.joy_subscription_    = self.create_subscription(Joy, (self.get_namespace() + '_opr/joy'), self.joy_callback, 10)
+        self.joy_subscription_    = self.create_subscription(Joy, (self.get_namespace() + '/opr/joy').replace('//', '/'), self.joy_callback, 10)
         self.timer = self.create_timer(self.get_param_val('publish_rate').double_value / 1000, self.pub_timer_callback, autostart=False)
 
     def begin(self):
